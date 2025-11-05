@@ -1,0 +1,195 @@
+{
+  "name": "Email to PDF Converter (Railway API)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b8c7d6e5-4f3a-2b1c-9d8e-7f6a5b4c3d2e",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "emailFileUrl",
+              "value": "https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_HERE"
+            },
+            {
+              "name": "googleDriveFileId",
+              "value": "165Onx_d_9dejfB-2PVzLiP23JO2aPey7"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+      "name": "Set Input Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [470, 300],
+      "notes": "Configure your email file URL or Google Drive file ID here"
+    },
+    {
+      "parameters": {
+        "url": "https://your-railway-app.up.railway.app/convert",
+        "authentication": "none",
+        "requestMethod": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"googleDriveFileId\": \"{{ $json.googleDriveFileId }}\"\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "c2d3e4f5-g6h7-i8j9-k0l1-m2n3o4p5q6r7",
+      "name": "Call Railway API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 300],
+      "notes": "Sends the email file to Railway API for conversion"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "d3e4f5g6-h7i8-j9k0-l1m2-n3o4p5q6r7s8",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "mode": "jsonToBinary",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "application/pdf",
+          "dataIsBase64": true
+        },
+        "convertAllData": false,
+        "sourceProperty": "pdfBase64",
+        "destinationProperty": "data"
+      },
+      "id": "e4f5g6h7-i8j9-k0l1-m2n3-o4p5q6r7s8t9",
+      "name": "Convert Base64 to PDF",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1130, 200],
+      "notes": "Converts the base64 PDF data to a binary file"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "folderId": {
+          "__rl": true,
+          "value": "root",
+          "mode": "list",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "name": "={{ $json.fileName }}",
+        "options": {}
+      },
+      "id": "f5g6h7i8-j9k0-l1m2-n3o4-p5q6r7s8t9u0",
+      "name": "Save to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1350, 200],
+      "notes": "Optional: Save the PDF to Google Drive"
+    },
+    {
+      "parameters": {
+        "message": "=Conversion failed: {{ $json.error }}",
+        "additionalFields": {}
+      },
+      "id": "g6h7i8j9-k0l1-m2n3-o4p5-q6r7s8t9u0v1",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1130, 400],
+      "notes": "Handle conversion errors here"
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Set Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Input Data": {
+      "main": [
+        [
+          {
+            "node": "Call Railway API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Railway API": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          {
+            "node": "Convert Base64 to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Base64 to PDF": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-11-05T10:00:00.000Z",
+  "versionId": "1"
+}
